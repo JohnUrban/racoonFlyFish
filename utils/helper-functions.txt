@@ -290,7 +290,7 @@ function write_racon_script {
     ASM=racon-${B}_${i}.fasta
     PAF=${B}_${j}.paf
     OUT=racon-${B}_${j}.fasta
-    echo -e "minimap2 -t ${P} -x map-ont ${ASM} ${READS} > ${PAF}\n"  >> ${SCRIPT}
+    echo -e "minimap2 -t ${P} -x ${X} ${ASM} ${READS} > ${PAF}\n"  >> ${SCRIPT}
     echo -e "racon -t ${P} ${READS} ${PAF} ${ASM} > ${OUT}\n" >> ${SCRIPT}
     i=${j}
   done
