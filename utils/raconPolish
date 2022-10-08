@@ -54,6 +54,7 @@ export TIME=12:00:00    ## SLURM option
 export MEM=80G          ## SLURM option
 
 export MM2=$( which minimap2 )
+export MINIMAP2=$( which minimap2 )
 export RACON=$( which racon )
 
 export ALLVARS=""
@@ -71,16 +72,16 @@ export FLYEHELP=false
 ##############################################################################
 ## GET OPTS
 ##############################################################################
-while getopts "i:R:t:r:ST:M:G:d:Hv" arg; do
+while getopts "i:R:t:r:ST:M:x:Hv" arg; do
     case $arg in
         i) export FOFN=${OPTARG} ; FOFNMODE=true ;;
         R) export READS=${OPTARG} ;;
-        r) export ROUNDS=${OPTARG} ; export ITERS=${OPTARG} ; export FLYEROUNDS=${OPTARG} ;;
         t) export THREADS=${OPTARG} ; export P=${THREADS} ;;
+        r) export ROUNDS=${OPTARG} ; export ITERS=${OPTARG} ; export RACONROUNDS=${OPTARG} ;;
         S) export SLURM=true ;;
         T) export TIME=${OPTARG} ;;
         M) export MEM=${OPTARG} ;;
-        d) export X=${OPTARG} ;;
+        x) export X=${OPTARG} ;;
         H) export RACONHELP=true ;;
         v) export VERBOSE=true ;;
         *) help; exit;;
@@ -93,10 +94,10 @@ done
 ##############################################################################
 ## PROCESSING ARGS
 ##############################################################################
-for REQUIRED in RACON MINIMAP2 ; do if [ -z ${REQUIRED} ]; then echo "${REQUIRED} not found in PATH. Please add it to PATH. Exiting..." ; echo ; raconhelp ; exit ; fi
+for REQUIRED in RACON MINIMAP2 ; do if [ -z ${REQUIRED} ]; then echo "${REQUIRED} not found in PATH. Please add it to PATH. Exiting..." ; echo ; racoonhelp ; exit ; fi
 if $RACONHELP ; then racon --version ; racon --help ; fi
 
-for REQUIRED in FOFN READS X ; do echo -e "REQUIRED\t${REQUIRED}\t${!REQUIRED}" ; if [ -z ${!REQUIRED} ]; then echo ${REQUIRED} is a required argument. Not given. Exiting. ; echo ; flyhelp ; fi ; done
+for REQUIRED in FOFN READS X ; do echo -e "REQUIRED\t${REQUIRED}\t${!REQUIRED}" ; if [ -z ${!REQUIRED} ]; then echo ${REQUIRED} is a required argument. Not given. Exiting. ; echo ; racoonhelp ; fi ; done
 for ARG in ROUNDS THREADS SLURM TIME MEM ; do echo -e "OPTIONS\t${ARG}\t${!ARG}" ; done
 
 

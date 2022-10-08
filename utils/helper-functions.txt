@@ -183,6 +183,8 @@ function get_flye_options {
 function get_racon_options {
   echo "
 	RaCon Pipeline Options:
+	-x	X : -x option for minimap2. Mapping presets. Examples: map-ont, map-pb .
+	-H	RACONHELP: Show version and help message from RaCon program. Can also do: racon --version and racon --help.
 "
 }
 
