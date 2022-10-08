@@ -33,13 +33,13 @@ help_catch ${@}
 #########################################################################################################
 ## FIND DEPENDENCIES
 #########################################################################################################
-
-export MM2=$( which minimap2 )
-export FLYE=$( which flye )
-export RACON=$( which racon )
-export MEDAKA=$( which medaka_consensus )
-export SAMTOOLS=$( which samtools )
-export PY3=$( which python3 )
+# This can be done in each script as needed....
+#export MM2=$( which minimap2 )
+#export FLYE=$( which flye )
+#export RACON=$( which racon )
+#export MEDAKA=$( which medaka_consensus )
+#export SAMTOOLS=$( which samtools )
+#export PY3=$( which python3 )
 #for VAR in MM2 FLYE RACON MEDAKA SAMTOOLS PIPELINE DO_FLYE_PIPELINE DO_RACOON_PIPELINE DO_FISH_PIPELINE DO_CHIMERA_PIPELINE ; do echo -e "${VAR}\t${!VAR}" ; done
 
 
