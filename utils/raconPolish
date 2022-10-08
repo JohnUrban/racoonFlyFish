@@ -94,10 +94,10 @@ done
 ##############################################################################
 ## PROCESSING ARGS
 ##############################################################################
-for REQUIRED in RACON MINIMAP2 ; do if [ -z ${REQUIRED} ]; then echo "${REQUIRED} not found in PATH. Please add it to PATH. Exiting..." ; echo ; racoonhelp ; exit ; fi
+for REQUIRED in RACON MINIMAP2 ; do if [ -z ${REQUIRED} ]; then echo "${REQUIRED} not found in PATH. Please add it to PATH. Exiting..." ; echo ; racoonhelp ; exit ; fi ; done
 if $RACONHELP ; then racon --version ; racon --help ; fi
 
-for REQUIRED in FOFN READS X ; do echo -e "REQUIRED\t${REQUIRED}\t${!REQUIRED}" ; if [ -z ${!REQUIRED} ]; then echo ${REQUIRED} is a required argument. Not given. Exiting. ; echo ; racoonhelp ; fi ; done
+for REQUIRED in FOFN READS X ; do echo -e "REQUIRED\t${REQUIRED}\t${!REQUIRED}" ; if [ -z ${!REQUIRED} ]; then echo ${REQUIRED} is a required argument. Not given. Exiting. ; echo ; racoonhelp ; exit; fi ; done
 for ARG in ROUNDS THREADS SLURM TIME MEM ; do echo -e "OPTIONS\t${ARG}\t${!ARG}" ; done
 
 
