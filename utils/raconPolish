@@ -23,7 +23,7 @@ version_check ${@}
 
 
 ## HELP
-if [ $# -eq 0 ]; then raconhelp ; exit ; fi
+if [ $# -eq 0 ]; then racoonhelp ; exit ; fi
 
 
 
