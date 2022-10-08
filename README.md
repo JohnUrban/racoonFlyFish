@@ -23,7 +23,8 @@ racoonFlyFish: Automated multi-round genome assembly polishing with long reads u
 - Samtools	(note - this is installed when installing medaka with conda)
 - Tabix		(note - this is installed when installing medaka with conda)
 - Bgzip		(note - this is installed when installing medaka with conda)
-
+- Python3
+- biopython package in python3
 
 # Install everything with Conda or Mamba:
 	conda create -n racoonFlyFishDeps -c conda-forge -c bioconda medaka racon minimap2 flye samtools tabix

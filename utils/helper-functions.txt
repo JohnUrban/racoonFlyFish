@@ -1,0 +1,439 @@
+#########################################################################################################
+## MAIN HELP FUNCTION
+#########################################################################################################
+
+function help {
+  echo "
+	racoonFlyFish : Automated multi-round genome assembly polishing with long reads using combinations of RaCon, Flye, and Medaka.
+
+	Usage: 
+		$( basename ${0} ) subcommand options
+
+		Each subcommand activates a different pipeline (RaCon, Flye, Medaka, or all 3).
+		Each pipeline has 2-3 subcommand keywords to activate it: 
+			racoon or racon, fly or flye, fish or medaka, chimera or trio for all 3, or duo for the first 2. 
+
+	RaCon Polishing :
+		$( basename ${0} ) [racoon|racon] [options]
+
+	Flye Polishing :
+		$( basename ${0} ) [fly|flye] [options]
+
+	Medaka Polishing :
+		$( basename ${0} ) [fish|medaka] [options]
+
+	Dup/Trio/Chimera Polishing :
+		$( basename ${0} ) [chimera|trio|duo] [options]
+
+
+	Common Options to all pipelines:
+	
+
+        -i      FOFN	: Required.
+        -R      READS	: Required.
+	-t	THREADS	: Default = 16.
+	-r	ROUNDS	: Defaults = When run separately, 4 for RaCon, 4 for Flye, 1 for Medaka. In chimera-mode, defaults to 1 round of each polisher.
+	-S	SLURM	: Use to launch SLURM batch scripts (one per assembly in FOFN) instead of processing serially in current env. Default = false.
+	-T	TIME	: Time limit for SLURM. Default = 12:00:00 .
+	-M	MEM	: Mem limit for SLURM. Default = 80G .
+	-v	VERBOSE	: Default = false.
+
+
+        RaCon Options:
+
+
+        Flye Options:
+
+
+        Medaka Options:
+
+
+        Chimera Options:
+
+
+	SLURM Advice (assuming 400-800Mb genome with 10-30X read coverage, 16 threads):
+		- Ranking the pipelines by speed:
+			- RaCon (a couple of hours for 4 iterations). An 8 hour limit is very safe.
+			- Flye (a little bit longer than RaCon). An 8 hour limit is very safe.
+			- Medaka 8-12 hours (longest by 2-4 fold). Am 8 hour limit will have mixed results, a 12 hour limit is safe.
+			- The trio-chimera pipeline with 1 round each (RaCon->Flye->Medaka) will need 12 hours to be safe as well.
+		- Ranking pipelines by memory needed:
+			- RaCon uses the least memory. A limit of 24G is a safe bet.
+			- Flye and Medaka use much more memory. A limit of something in the range of 50-80G may be necessary.
+			- The duo- and trio-chimera pipelines with 1 round each (RaCon->Flye or RaCon->Flye->Medaka) will need 50-80G as well.
+
+"
+}
+
+
+function help_catch {
+  if [ $# -eq 0 ]; then help ; exit ; fi
+  if [ ${PIPELINE} == "fly" ] || [ ${PIPELINE} == "flye" ]; then export DO_FLY_PIPELINE=true ; export RUN=${FLYPOL} ; fi
+  if [ ${PIPELINE} == "racon" ] || [ ${PIPELINE} == "racoon" ]; then export DO_RACOON_PIPELINE=true ;export  RUN=${RACOONPOL}; fi
+  if [ ${PIPELINE} == "fish" ] || [ ${PIPELINE} == "medaka" ]; then export DO_FISH_PIPELINE=true ; export RUN=${FISHPOL} ; fi
+  if [ ${PIPELINE} == "chimera" ] || [ ${PIPELINE} == "trio" ] || [ ${PIPELINE} == "duo" ]; then export DO_CHIMERA_PIPELINE=true ; export RUN=${CHIMERAPOL}; fi
+  if ! ${DO_FLY_PIPELINE} && ! ${DO_RACOON_PIPELINE} && ! ${DO_FISH_PIPELINE} && ! ${DO_CHIMERA_PIPELINE} ; then echo "Incorrect subcommand given as argument 1. Try again. Here is some help." ; echo ; help ; exit ; fi
+}
+
+
+#########################################################################################################
+## VERSION HELP FUNCTION
+#########################################################################################################
+
+function version_check {
+  if [ $# -ge 1 ]; then 
+    if [ $1 == "--version" ]; then
+      echo "
+	racoonFlyFish version 		${RFFVERSION}
+	flyePolish pipeline version 	${FLYEPOL_SCRIPT_VERSION}
+	raconPolish pipeline version	${RACONPOL_SCRIPT_VERSION}
+	medakaPolish pipeline version	${MEDAKA_POL_VERSION}
+	chimeraPolish pipeline version	${CHIMERA_POL_SCRIPT_VERSION}
+	"	
+      exit ; 
+    fi ; 
+  fi
+}
+
+
+function get_program_name {
+  echo "
+        racoonFlyFish : Automated multi-round genome assembly polishing with long reads using combinations of RaCon, Flye, and Medaka.
+"
+}
+
+
+
+#########################################################################################################
+## SUBSCRIPT HELP FUNCTIONS
+#########################################################################################################
+function get_common_options {
+  echo "
+	Common options among pipelines:
+        -i      FOFN    : Required.
+        -R      READS   : Required.
+        -t      THREADS : Default = 16.
+        -r      ROUNDS  : Defaults = When run separately, 4 for RaCon, 4 for Flye, 1 for Medaka. In chimera-mode, defaults to 1 round of each polisher.
+        -S      SLURM   : Use to launch SLURM batch scripts (one per assembly in FOFN) instead of processing serially in current env. Default = false.
+        -T      TIME    : Time limit for SLURM. Default = 12:00:00 .
+        -M      MEM     : Mem limit for SLURM. Default = 80G .
+        -v      VERBOSE : Default = false.
+"
+}
+
+
+function get_flye_title {
+  echo "
+	Fly: Flye Polish Pipeline
+
+                racoonFlyFish [fly|flye] -i FOFN -R READS -G GSIZE -d READTYPE [options]
+
+		OR
+
+		${SCRIPTNAME} -i FOFN -R READS -G GSIZE -d READTYPE [options]
+        "
+}
+
+function get_racon_title {
+  echo "
+	Racoon: RaCon Polish Pipeline
+
+                racoonFlyFish [racon|racoon] [options]
+
+                OR
+
+                ${SCRIPTNAME} [options]
+        "
+}
+
+function get_medaka_title {
+  echo "
+	Fish: Medaka Polish Pipeline
+
+                racoonFlyFish [fish|medaka] [options]
+
+                OR
+
+                ${SCRIPTNAME} [options]
+        "
+}
+
+function get_chimera_title {
+  echo "
+	Chimera: Duo- or Trio- Polish Pipeline
+
+                racoonFlyFish [chimera|trio|duo] [options]
+
+                OR
+
+                ${SCRIPTNAME} [options]
+        "
+}
+
+function get_flye_options {
+  echo "
+	Flye Polish Pipeline Options:
+	-G	GSIZE	: Size of haploid genome (can use diploid size if assemblies closer to that). Shorthand works. E.g. 400m for 400 Mb genome.
+	-d	READTYPE: Read type used by Flye. Use -H to bring up flye help message. 
+			  Options here are: nano-raw, nano-corr, nano-hq, pacbio-raw, pacbio-corr, pacbio-hifi.
+	-H	FLYEHELP: Show version and help message from Flye program. Can also do: flye --version and flye --help.
+"
+}
+
+function get_racon_options {
+  echo "
+	RaCon Pipeline Options:
+"
+}
+
+function get_medaka_options {
+  echo "
+	Medaka Pipeline Options:
+"
+}
+
+function get_chimera_options {
+  echo "
+	Chimera Pipeline Options
+"
+}
+
+
+function flyhelp {
+  get_program_name
+  get_flye_title
+  get_common_options
+  get_flye_options
+}
+
+function racoonhelp {
+  get_program_name
+  get_racon_title
+  get_common_options
+  get_racon_options
+}
+
+function fishhelp {
+  get_program_name
+  get_medaka_title
+  get_common_options
+  get_medaka_options
+}
+
+
+function chimerahelp {
+  get_program_name
+  get_chimera_title
+  get_common_options
+  get_chimera_options
+}
+
+
+
+#########################################################################################################
+## OTHER COMMON/SHARED FUNCTIONS
+#########################################################################################################
+
+
+function run_or_launch_script {
+  if $SLURM ; then
+    #sbatch --time=${TIME} --nodes 1 --ntasks ${P} -J flyepol-${DIR} -o slurm-${DIR}-flyepol-%A.out --export=ALL --mem=${MEM} ${SCRIPT}
+    sbatch --time=${TIME} --nodes 1 --ntasks ${P} -J ${JOBNAME} -o ${OUTNAME} --export=ALL --mem=${MEM} ${SCRIPT}
+  else
+    bash ${SCRIPT}
+  fi
+}
+
+
+
+#########################################################################################################
+## FLYEPOL PIPELINE RELATED FUNCTIONS
+#########################################################################################################
+
+function write_flye_script {
+  echo "#!/bin/bash" > ${SCRIPT}
+  echo "${FLYE} --genome-size ${GSIZE} ${READTYPE} ${READS} --out-dir ${DIR} --threads ${P} --polish-target ${ASM} --iterations ${ITERS}" >> ${SCRIPT}
+}
+
+function flye_polish_loop {
+  OUTDIR=flyepol_output
+  mkdir -p ${OUTDIR} && cd ${OUTDIR}
+  while read line ; do
+    export ARR=( $( echo $line ) )
+    export DIR=${ARR[0]}
+    export ASM=${ARR[1]}
+    export SCRIPT=racoonFlyFish-autogen-flye-polish-${DIR}.sh
+    export echo ${DIR}
+    export JOBNAME=flyepol-${DIR}
+    export OUTNAME=slurm-${DIR}-flyepol-%A.out
+    write_flye_script
+    run_or_launch_script
+  done < ${FOFN}
+}
+
+
+
+
+#########################################################################################################
+## RACONPOL PIPELINE RELATED FUNCTIONS
+#########################################################################################################
+
+function write_racon_script {
+  echo "#!/bin/bash" > ${SCRIPT}
+  echo "#source ~/.bash_profile" >> ${SCRIPT}
+  echo -e "#conda activate miniasm\n" >> ${SCRIPT}
+  i=0
+  echo -e "${UTILS}/extractFastxEntries.py --minlen 1 -f ${ASM} > racon-${B}_${i}.fasta\n" >> ${SCRIPT}
+  for j in 1 2 3 4 ; do 
+    ASM=racon-${B}_${i}.fasta
+    PAF=${B}_${j}.paf
+    OUT=racon-${B}_${j}.fasta
+    echo -e "minimap2 -t ${P} -x map-ont ${ASM} ${READS} > ${PAF}\n"  >> ${SCRIPT}
+    echo -e "racon -t ${P} ${READS} ${PAF} ${ASM} > ${OUT}\n" >> ${SCRIPT}
+    i=${j}
+  done
+}
+
+
+function racon_polish_loop {
+  export OUTDIR=raconpol_output
+  mkdir -p ${OUTDIR} && cd ${OUTDIR}
+
+  while read line ; do
+    export ARR=( $( echo $line ) )
+    export B=${ARR[0]}
+    export ASM=${ARR[1]}
+    export SCRIPT=racon-${B}.sh
+    export JOBNAME=raconpol-${B}
+    export OUTNAME=slurm-${B}-raconpol-%A.out
+    write_racon_script
+    run_or_launch_script
+    echo
+  done < ${FOFN}
+  wait
+}
+
+
+
+
+#########################################################################################################
+## MEDAKAPOL PIPELINE RELATED FUNCTIONS
+#########################################################################################################
+
+function write_medaka_script {
+  echo "#!/bin/bash" > ${SCRIPT}
+  echo "source ~/.bash_profile" >> ${SCRIPT}
+  #echo "conda activate medaka" >> ${SCRIPT}
+  echo "conda activate medakaOct2022" >> ${SCRIPT}
+  echo "medaka_consensus -i ${READS} -d ${ASM} -o ${DIR} -t ${P} -m ${MODEL}" >> ${SCRIPT}
+}
+
+
+
+function medaka_polish_loop {
+  OUTDIR=medakapol_output
+  mkdir -p ${OUTDIR} && cd ${OUTDIR}
+
+  while read line ; do
+  export ARR=( $( echo $line ) )
+  export DIR=${ARR[0]}
+  export ASM=${ARR[1]}
+  export SCRIPT=run-medaka-on-${DIR}.sh
+  echo ${DIR}
+  export JOBNAME=medakapol-${DIR}
+  export OUTNAME=slurm-${DIR}-medaka-%A.out
+  write_medaka_script
+  run_or_launch_script
+  done < ${FOFN}
+}
+
+
+
+
+
+
+#########################################################################################################
+## CHIMERA PIPELINE RELATED FUNCTIONS
+#########################################################################################################
+
+
+function write_chimera_script {
+  ## INIT SCRIPT
+  echo "#!/bin/bash" > ${SCRIPT}
+  echo "source ~/.bash_profile" >> ${SCRIPT}
+  echo -e "source ~/software/conda/source-conda-for-scripts.sh \n" >> ${SCRIPT}
+
+  ## RACON
+  RACONDIR=01-raconpol
+  RACONWD=${WD}/${RACONDIR}	# For racpol-asm path later
+  #####echo -e "mkdir ${RACONDIR} && cd ${RACONDIR}" >> ${SCRIPT}
+  echo -e "conda activate miniasm\n" >> ${SCRIPT}
+  echo -e "mkdir ${RACONDIR}\n" >> ${SCRIPT}
+  i=0
+  echo -e "extractFastxEntries.py --minlen 1 -f ${ASM} > ${RACONDIR}/racon-${B}_${i}.fasta\n" >> ${SCRIPT}
+  for j in $( seq 1 ${RACONITERS} ) ; do 
+    ASM=${RACONDIR}/racon-${B}_${i}.fasta
+    PAF=${RACONDIR}/${B}_${j}.paf
+    OUT=${RACONDIR}/racon-${B}_${j}.fasta
+    echo -e "minimap2 -t ${P} -x map-ont ${ASM} ${READS} > ${PAF}\n"  >> ${SCRIPT}
+    echo -e "racon -t ${P} ${READS} ${PAF} ${ASM} > ${OUT}\n" >> ${SCRIPT}
+    i=${j}
+  done
+
+  # Last Racon Asm
+  ASM=${RACONWD}/racon-${B}_${i}.fasta
+  
+  ## NO MORE # Move back out of RACONDIR to WD
+  ############ echo -e "cd ../\n" >> ${SCRIPT}
+  
+  ## FLYE
+  FLYEDIR=02-flyepol
+  FLYEWD=${WD}/${FLYEDIR}
+  echo -e "${FLYE} --genome-size ${GSIZE} ${READTYPE} ${READS} --out-dir ${FLYEDIR} --threads ${P} --polish-target ${ASM} --iterations ${FLYEITERS} \n" >> ${SCRIPT}
+  ASM=${FLYEWD}/polished_${FLYEITERS}.fasta
+  echo -e "ln -s ${ASM} 02-raconpol-flyepol.fasta \n" >> ${SCRIPT}
+
+  ## MEDAKA
+  MEDAKADIR=03-medaka
+  MEDAKAWD=${WD}/${MEDAKADIR}
+  echo -e "conda activate medakaOct2022 \n" >> ${SCRIPT}
+  for i in $(seq 1 ${MEDAKAITERS} ); do
+    MITERDIR=${MEDAKADIR}/${i}
+    echo -e "mkdir -p ${MITERDIR} \n" >> ${SCRIPT}
+    echo -e "medaka_consensus -i ${READS} -d ${ASM} -o ${MITERDIR} -t ${P} -m ${MODEL}\n" >> ${SCRIPT}
+    ASM=${MITERDIR}/consensus.fasta
+  done
+  echo -e "ln -s ${ASM} 03-raconpol-flyepol-medaka.fasta \n" >> ${SCRIPT}
+}
+
+
+function chimera_polish_loop {
+  OUTDIR=triopol_output
+  mkdir -p ${OUTDIR} && cd ${OUTDIR}
+  export MAIN=${PWD}
+  
+  while read line ; do
+    export ARR=( $( echo $line ) )
+    export B=${ARR[0]}			#raconpol
+    export DIR=${B}			#flyepol/medaka
+    export ASM=${ARR[1]} 		#racon/flye/medaka
+    export SCRIPT=trio-polishing-on-${DIR}.sh
+  
+    ## make dir	for starting ASM to do all operations under
+    WD=${MAIN}/${DIR}
+    mkdir ${WD} && cd ${WD} 
+  
+    echo ${DIR}
+    write_chimera_script 
+
+    export JOBNAME=chimerapolish-${B}
+    export OUTNAME=slurm-${B}-triopolish-%A.out
+    echo
+
+    ## Come back out of init asm DIR
+    cd ../
+  done < ${FOFN}
+  wait
+}
+
+

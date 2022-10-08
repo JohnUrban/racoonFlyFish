@@ -1,58 +1,141 @@
 #!/bin/bash
-
-if [ $# -eq 0 ]; then echo "Usage: $( basename ${0} ) asm.fofn" ; exit ; fi
-
-export FOFN=${1}
-
-if [ -z ${FOFN} ]; then export FOFN=asm.fofn ; fi
-
-
-source ~/.bash_profile
-source ~/software/conda/source-conda-for-scripts.sh
-conda activate miniasm
-
-export READS=~/jurban/data/coral/R01-L01/combined_fastqs/all.fastq
-#export READS=~/jurban/data/coral/R01-L01/combined_fastqs/pass.fastq
+set -e
+#################################################################
+#source ~/.bash_profile
+#source ~/software/conda/source-conda-for-scripts.sh
+#conda activate miniasm
+#conda activate medaka
+#conda activate medakaOct2022
 
 
-export PATH=/central/groups/carnegie_poc/jurban/software/flye/Flye/bin:${PATH}
+## Collecting some VARs
+export SCRIPTNAME=$( basename ${0} )
+export SUBSCRIPTDIR=$( dirname ${0} )
+if [ -z ${UTILS} ]; then export UTILS=$( dirname ${0} ) ; fi	## should be same as SUBSCRIPT DIR ; if running racoonFlyFish, it will already be in ENV, else it will be taken from versions.txt
+export PATH=${UTILS}:${PATH}					## To be sure ; and especially when this script run directly.
 
-export FLYE=/central/groups/carnegie_poc/jurban/software/flye/Flye/bin/flye
-export READTYPE=--nano-hq	#--nano-raw
-#export GSIZE=400m
-export GSIZE=800m
+## Early source needs
+source ${UTILS}/versions.txt
+source ${UTILS}/helper-functions.txt
+
+
+
+## VERSION MESSAGE
+version_check ${@}
+
+
+## HELP
+if [ $# -eq 0 ]; then echo "Usage: $( basename ${0} ) asm.fofn" ; flyhelp ; exit ; fi
+
+
+
+
+
+##############################################################################
+## REQUIRED
+##############################################################################
+export FOFN=""
+export READS=""
+export MODEL=""
+
+##############################################################################
+## DEFAULTS
+##############################################################################
+export SCRIPTDIR=${SCRIPTDIR}	## Empty if using this script directly, i.e. not using racoonFlyFish
+
+export MODEL=r941_min_sup_g507
+
+export READS=""
+
+export THREADS=16
+export P=${THREADS}
+
+
+export CHIMERA_RACONROUNDS=1
+export CHIMERA_FLYEROUNDS=1
+export CHIMERA_MEDAKAROUNDS=1
 
 export RACONITERS=1
 export FLYEITERS=1
 export MEDAKAITERS=1
 
-export MODEL=r941_min_sup_g507
+
+export MAINWD=${PWD}
+export SLURM=false      ## if true, THREADS or P also used for NTASKS
+export TIME=12:00:00    ## SLURM option
+export MEM=80G          ## SLURM option
 
 
-export P=16
-export TIME=24:00:00
+export ALLVARS=""
+
 export MEM=80G
+export TIME=12:00:00
+
+export MEDAKA=$( which medaka_consensus )
+export MM2=$( which minimap2 )
+export MINMAP2=$( which minimap2 )
+export FLYE=$( which flye )
+export RACON=$( which racon )
+
+
+export DEBUG=true
+export CONTINUE=true
+export HELP=false
+export VERBOSE=false
+
+
+##############################################################################
+## GET OPTS
+##############################################################################
+while getopts "i:R:t:r:ST:M:G:d:Hv" arg; do
+    case $arg in
+        i) export FOFN=${OPTARG} ; FOFNMODE=true ;;
+        R) export READS=${OPTARG} ;;
+        r) export RACONITERS=${OPTARG} ;
+        f) export FLYEITERS=${OPTARG} ;
+        k) export MEDAKAITERS=${OPTARG} ;
+        t) export THREADS=${OPTARG} ; export P=${THREADS} ;;
+        S) export SLURM=true ;;
+        T) export TIME=${OPTARG} ;;
+        M) export MEM=${OPTARG} ;;
+        x) export X=${OPTARG} ;;
+        G) export GSIZE=${OPTARG} ;;
+        d) export READTYPE=${OPTARG} ;;
+        m) export MODEL=${OPTARG} ;;
+        v) export VERBOSE=true ;;
+        *) help; exit;;
+    esac
+done
 
 
 
 
-OUTDIR=triopol_output
-mkdir -p ${OUTDIR} && cd ${OUTDIR}
-export MAIN=${PWD}
+##############################################################################
+## PROCESSING ARGS
+##############################################################################
+if [ -z ${MM2} ]; then echo "minimap2 not found in PATH. Please add it to PATH. Exiting..." ; echo ; medakahelp ; exit ; fi
+if [ -z ${FLYE} ]; then echo "flye not found in PATH. Please add it to PATH. Exiting..." ; echo ; medakahelp ; exit ; fi
+if [ -z ${RACON} ]; then echo "racon not found in PATH. Please add it to PATH. Exiting..." ; echo ; medakahelp ; exit ; fi
+if [ -z ${MEDAKA} ]; then echo "medaka_consensus not found in PATH. Please add it to PATH. Exiting..." ; echo ; medakahelp ; exit ; fi
 
-while read line ; do
-  ARR=( $( echo $line ) )
-  B=${ARR[0]}			#raconpol
-  DIR=${B}			#flyepol/medaka
-  ASM=${ARR[1]} 		#racon/flye/medaka
-  SCRIPT=trio-polishing-on-${DIR}.sh
-  
-  ## make dir	for starting ASM to do all operations under
-  WD=${MAIN}/${DIR}
-  mkdir ${WD} && cd ${WD} 
 
-  echo ${DIR}
+for REQUIRED in FOFN READS X GSIZE READTYPE MODEL  ; do echo -e "REQUIRED\t${REQUIRED}\t${!REQUIRED}" ; if [ -z ${!REQUIRED} ]; then echo ${REQUIRED} is a required argument. Not given. Exiting. ; echo ; flyhelp ; fi ; done
+for ARG in CHIMERA_RACONROUNDS CHIMERA_FLYEROUNDS CHIMERA_MEDAKAROUNDS  THREADS SLURM TIME MEM ; do echo -e "OPTIONS\t${ARG}\t${!ARG}" ; done
 
+
+
+
+##############################################################################
+## EXECUTE
+##############################################################################
+chimera_polish_loop
+
+exit
+
+
+
+
+function write_chimera_script {
   ## INIT SCRIPT
   echo "#!/bin/bash" > ${SCRIPT}
   echo "source ~/.bash_profile" >> ${SCRIPT}
@@ -99,16 +182,37 @@ while read line ; do
     ASM=${MITERDIR}/consensus.fasta
   done
   echo -e "ln -s ${ASM} 03-raconpol-flyepol-medaka.fasta \n" >> ${SCRIPT}
+}
 
-  sbatch --time=${TIME} --nodes 1 --ntasks ${P} -J triopolish-${B} -o slurm-${B}-triopolish-%A.out --export=ALL --mem=${MEM} ${SCRIPT}
-  echo
 
-  ## Come back out of init asm DIR
-  cd ../
-done < ${FOFN}
+function chimera_polish_loop {
+  OUTDIR=triopol_output
+  mkdir -p ${OUTDIR} && cd ${OUTDIR}
+  export MAIN=${PWD}
+  
+  while read line ; do
+    export ARR=( $( echo $line ) )
+    export B=${ARR[0]}			#raconpol
+    export DIR=${B}			#flyepol/medaka
+    export ASM=${ARR[1]} 		#racon/flye/medaka
+    export SCRIPT=trio-polishing-on-${DIR}.sh
+  
+    ## make dir	for starting ASM to do all operations under
+    WD=${MAIN}/${DIR}
+    mkdir ${WD} && cd ${WD} 
+  
+    echo ${DIR}
+    write_chimera_script 
 
-wait
+    export JOBNAME=chimerapolish-${B}
+    export OUTNAME=slurm-${B}-triopolish-%A.out
+    echo
 
+    ## Come back out of init asm DIR
+    cd ../
+  done < ${FOFN}
+  wait
+}
 
 
 

@@ -1,0 +1,32 @@
+##############################################################################
+## DEFAULTS
+##############################################################################
+export PIPELINE=${1}
+export DO_FLY_PIPELINE=false
+export DO_RACOON_PIPELINE=false
+export DO_FISH_PIPELINE=false
+export DO_CHIMERA_PIPELINE=false
+export FOFN=""
+export READS=""
+export THREADS=16
+export P=16
+export CLEAN=true
+export FLYEROUNDS=4
+export RACONROUNDS=4
+export MEDAKAROUNDS=1
+export CHIMERA_RACONROUNDS=1
+export CHIMERA_FLYEROUNDS=1
+export CHIMERA_MEDAKAROUNDS=1
+
+export MAINWD=${PWD}
+export SLURM=false	## if true, THREADS or P also used for NTASKS
+export TIME=12:00:00	## SLURM option
+export MEM=80G		## SLURM option
+
+export DEBUG=true
+export CONTINUE=true
+export HELP=false
+export VERBOSE=false
+
+export ALLVARS=""
+

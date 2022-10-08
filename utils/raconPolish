@@ -1,50 +1,111 @@
 #!/bin/bash
+set -e
+#################################################################
+#source ~/.bash_profile
+#source ~/software/conda/source-conda-for-scripts.sh
+#conda activate miniasm
 
-if [ $# -eq 0 ]; then echo "Usage: $( basename ${0} ) asm.fofn" ; exit ; fi
 
-export FOFN=${1}
+## Collecting some VARs
+export SCRIPTNAME=$( basename ${0} )
+export SUBSCRIPTDIR=$( dirname ${0} )
+if [ -z ${UTILS} ]; then export UTILS=$( dirname ${0} ) ; fi	## should be same as SUBSCRIPT DIR ; if running racoonFlyFish, it will already be in ENV, else it will be taken from versions.txt
+export PATH=${UTILS}:${PATH}					## To be sure ; and especially when this script run directly.
 
-if [ -z ${FOFN} ]; then export FOFN=asm.fofn ; fi
+## Early source needs
+source ${UTILS}/versions.txt
+source ${UTILS}/helper-functions.txt
 
-source ~/.bash_profile
-source ~/software/conda/source-conda-for-scripts.sh
-conda activate miniasm
 
-export READS=~/jurban/data/coral/R01-L01/combined_fastqs/all.fastq
-####export READS=~/jurban/data/coral/R01-L01/combined_fastqs/pass.fastq
+
+## VERSION MESSAGE
+version_check ${@}
+
+
+## HELP
+if [ $# -eq 0 ]; then raconhelp ; exit ; fi
+
+
+
+
+##############################################################################
+## REQUIRED
+##############################################################################
+export FOFN=""
+export READS=""
+export X=""	#map-ont map-pb
+
+##############################################################################
+## DEFAULTS
+##############################################################################
+export SCRIPTDIR=${SCRIPTDIR}	## Empty if using this script directly, i.e. not using racoonFlyFish
+
+
+export THREADS=16
+export P=${THREADS}
+
+export RACONROUNDS=4
+export ITERS=${RACONROUNDS}
+export ROUNDS=${RACONROUNDS}
+
+export MAINWD=${PWD}
+export SLURM=false      ## if true, THREADS or P also used for NTASKS
+export TIME=12:00:00    ## SLURM option
+export MEM=80G          ## SLURM option
+
+export MM2=$( which minimap2 )
+export RACON=$( which racon )
+
+export ALLVARS=""
 export P=16
 export MEM=24G
-export TIME=12:00:00
+export TIME=8:00:00
+
+export DEBUG=true
+export CONTINUE=true
+export HELP=false
+export VERBOSE=false
+export FLYEHELP=false
 
 
-OUTDIR=raconpol_output
-mkdir -p ${OUTDIR} && cd ${OUTDIR}
+##############################################################################
+## GET OPTS
+##############################################################################
+while getopts "i:R:t:r:ST:M:G:d:Hv" arg; do
+    case $arg in
+        i) export FOFN=${OPTARG} ; FOFNMODE=true ;;
+        R) export READS=${OPTARG} ;;
+        r) export ROUNDS=${OPTARG} ; export ITERS=${OPTARG} ; export FLYEROUNDS=${OPTARG} ;;
+        t) export THREADS=${OPTARG} ; export P=${THREADS} ;;
+        S) export SLURM=true ;;
+        T) export TIME=${OPTARG} ;;
+        M) export MEM=${OPTARG} ;;
+        d) export X=${OPTARG} ;;
+        H) export RACONHELP=true ;;
+        v) export VERBOSE=true ;;
+        *) help; exit;;
+    esac
+done
 
-while read line ; do
-  ARR=( $( echo $line ) )
-  B=${ARR[0]}
-  ASM=${ARR[1]}
-  SCRIPT=racon-${B}.sh
-  echo "#!/bin/bash" > ${SCRIPT}
-  echo "source ~/.bash_profile" >> ${SCRIPT}
-  echo -e "conda activate miniasm\n" >> ${SCRIPT}
-  i=0
-  echo -e "extractFastxEntries.py --minlen 1 -f ${ASM} > racon-${B}_${i}.fasta\n" >> ${SCRIPT}
-  for j in 1 2 3 4 ; do 
-    ASM=racon-${B}_${i}.fasta
-    PAF=${B}_${j}.paf
-    OUT=racon-${B}_${j}.fasta
-    echo -e "minimap2 -t ${P} -x map-ont ${ASM} ${READS} > ${PAF}\n"  >> ${SCRIPT}
-    echo -e "racon -t ${P} ${READS} ${PAF} ${ASM} > ${OUT}\n" >> ${SCRIPT}
-    i=${j}
-  done
 
-  sbatch --time=${TIME} --nodes 1 --ntasks ${P} -J raconpol-${B} -o slurm-${B}-raconpol-%A.out --export=ALL --mem=${MEM} ${SCRIPT}
-  echo
-done < ${FOFN}
 
-wait
 
+##############################################################################
+## PROCESSING ARGS
+##############################################################################
+for REQUIRED in RACON MINIMAP2 ; do if [ -z ${REQUIRED} ]; then echo "${REQUIRED} not found in PATH. Please add it to PATH. Exiting..." ; echo ; raconhelp ; exit ; fi
+if $RACONHELP ; then racon --version ; racon --help ; fi
+
+for REQUIRED in FOFN READS X ; do echo -e "REQUIRED\t${REQUIRED}\t${!REQUIRED}" ; if [ -z ${!REQUIRED} ]; then echo ${REQUIRED} is a required argument. Not given. Exiting. ; echo ; flyhelp ; fi ; done
+for ARG in ROUNDS THREADS SLURM TIME MEM ; do echo -e "OPTIONS\t${ARG}\t${!ARG}" ; done
+
+
+
+
+##############################################################################
+## EXECUTE
+##############################################################################
+racon_polish_loop
 
 exit
 

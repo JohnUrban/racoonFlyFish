@@ -1,37 +1,119 @@
 #!/bin/bash
-
-if [ $# -eq 0 ]; then echo "Usage: $( basename ${0} ) asm.fofn" ; exit ; fi
-
-export FOFN=${1}
-
-if [ -z ${FOFN} ]; then export FOFN=asm.fofn ; fi
-
-source ~/.bash_profile
-source ~/software/conda/source-conda-for-scripts.sh
+set -e
+#################################################################
 #conda activate medaka
-conda activate medakaOct2022
+#conda activate medakaOct2022
+
+
+## Collecting some VARs
+export SCRIPTNAME=$( basename ${0} )
+export SUBSCRIPTDIR=$( dirname ${0} )
+if [ -z ${UTILS} ]; then export UTILS=$( dirname ${0} ) ; fi	## should be same as SUBSCRIPT DIR ; if running racoonFlyFish, it will already be in ENV, else it will be taken from versions.txt
+export PATH=${UTILS}:${PATH}					## To be sure ; and especially when this script run directly.
+
+## Early source needs
+source ${UTILS}/versions.txt
+source ${UTILS}/helper-functions.txt
+
+
+
+## VERSION MESSAGE
+version_check ${@}
+
+
+## HELP
+if [ $# -eq 0 ]; then echo "Usage: $( basename ${0} ) asm.fofn" ; flyhelp ; exit ; fi
+
+
+
+
+
+##############################################################################
+## REQUIRED
+##############################################################################
+export FOFN=""
+export READS=""
+export MODEL=""
+
+##############################################################################
+## DEFAULTS
+##############################################################################
+export SCRIPTDIR=${SCRIPTDIR}	## Empty if using this script directly, i.e. not using racoonFlyFish
+
 export MODEL=r941_min_sup_g507
+
+export READS=export READS=~/jurban/data/coral/R01-L01/combined_fastqs/all.fastq
+
+export THREADS=16
+export P=${THREADS}
+
+export MEDAKAROUNDS=1
+export ITERS=${MEDAKAROUNDS}
+export ROUNDS=${MEDAKAROUNDS}
+
+export MAINWD=${PWD}
+export SLURM=false      ## if true, THREADS or P also used for NTASKS
+export TIME=12:00:00    ## SLURM option
+export MEM=80G          ## SLURM option
+
+
+export ALLVARS=""
 export P=16
 export MEM=80G
 export TIME=12:00:00
 
-export READS=export READS=~/jurban/data/coral/R01-L01/combined_fastqs/all.fastq
+export ITERS=${MEDAKAROUNDS}
+export MEDAKA=$( which medaka_consensus )
+export MM2=$( which minimap2 )
+export MINMAP2=$( which minimap2 )
+
+
+export DEBUG=true
+export CONTINUE=true
+export HELP=false
+export VERBOSE=false
+export FLYEHELP=false
+
+
+##############################################################################
+## GET OPTS
+##############################################################################
+while getopts "i:R:t:r:ST:M:G:d:Hv" arg; do
+    case $arg in
+        i) export FOFN=${OPTARG} ; FOFNMODE=true ;;
+        R) export READS=${OPTARG} ;;
+        r) export ROUNDS=${OPTARG} ; export ITERS=${OPTARG} ; export FLYEROUNDS=${OPTARG} ;;
+        t) export THREADS=${OPTARG} ; export P=${THREADS} ;;
+        S) export SLURM=true ;;
+        T) export TIME=${OPTARG} ;;
+        M) export MEM=${OPTARG} ;;
+        m) export MODEL=${OPTARG} ;;
+        H) export MEDAKAHELP=true ;;
+        v) export VERBOSE=true ;;
+        *) help; exit;;
+    esac
+done
 
 
 
-OUTDIR=medakapol_output
-mkdir -p ${OUTDIR} && cd ${OUTDIR}
 
-while read line ; do
-  ARR=( $( echo $line ) )
-  DIR=${ARR[0]}
-  ASM=${ARR[1]}
-  SCRIPT=run-medaka-on-${DIR}.sh
-  echo ${DIR}
-  echo "#!/bin/bash" > ${SCRIPT}
-  echo "source ~/.bash_profile" >> ${SCRIPT}
-  #echo "conda activate medaka" >> ${SCRIPT}
-  echo "conda activate medakaOct2022" >> ${SCRIPT}
-  echo "medaka_consensus -i ${READS} -d ${ASM} -o ${DIR} -t ${P} -m ${MODEL}" >> ${SCRIPT}
-  sbatch --time=${TIME} --nodes 1 --ntasks ${P} -J medakapol-${DIR} -o slurm-${DIR}-medaka-%A.out --export=ALL --mem=${MEM} ${SCRIPT}
-done < ${FOFN}
+##############################################################################
+## PROCESSING ARGS
+##############################################################################
+if [ -z ${MEDAKA} ]; then echo "medaka_consensus not found in PATH. Please add it to PATH. Exiting..." ; echo ; medakahelp ; exit ; fi
+if [ -z ${MM2} ]; then echo "minimap2 not found in PATH. Please add it to PATH. Exiting..." ; echo ; medakahelp ; exit ; fi
+if $MEDAKAHELP ; then medaka_consensus --version ; medaka_consensus --help ; fi
+
+for REQUIRED in FOFN READS MODEL  ; do echo -e "REQUIRED\t${REQUIRED}\t${!REQUIRED}" ; if [ -z ${!REQUIRED} ]; then echo ${REQUIRED} is a required argument. Not given. Exiting. ; echo ; flyhelp ; fi ; done
+for ARG in ROUNDS THREADS SLURM TIME MEM ; do echo -e "OPTIONS\t${ARG}\t${!ARG}" ; done
+
+
+
+
+##############################################################################
+## EXECUTE
+##############################################################################
+medaka_polish_loop
+
+exit
+
