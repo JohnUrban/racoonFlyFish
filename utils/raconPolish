@@ -1,0 +1,52 @@
+#!/bin/bash
+
+if [ $# -eq 0 ]; then echo "Usage: $( basename ${0} ) asm.fofn" ; exit ; fi
+
+export FOFN=${1}
+
+if [ -z ${FOFN} ]; then export FOFN=asm.fofn ; fi
+
+source ~/.bash_profile
+source ~/software/conda/source-conda-for-scripts.sh
+conda activate miniasm
+
+export READS=~/jurban/data/coral/R01-L01/combined_fastqs/all.fastq
+####export READS=~/jurban/data/coral/R01-L01/combined_fastqs/pass.fastq
+export P=16
+export MEM=24G
+export TIME=12:00:00
+
+
+OUTDIR=raconpol_output
+mkdir -p ${OUTDIR} && cd ${OUTDIR}
+
+while read line ; do
+  ARR=( $( echo $line ) )
+  B=${ARR[0]}
+  ASM=${ARR[1]}
+  SCRIPT=racon-${B}.sh
+  echo "#!/bin/bash" > ${SCRIPT}
+  echo "source ~/.bash_profile" >> ${SCRIPT}
+  echo -e "conda activate miniasm\n" >> ${SCRIPT}
+  i=0
+  echo -e "extractFastxEntries.py --minlen 1 -f ${ASM} > racon-${B}_${i}.fasta\n" >> ${SCRIPT}
+  for j in 1 2 3 4 ; do 
+    ASM=racon-${B}_${i}.fasta
+    PAF=${B}_${j}.paf
+    OUT=racon-${B}_${j}.fasta
+    echo -e "minimap2 -t ${P} -x map-ont ${ASM} ${READS} > ${PAF}\n"  >> ${SCRIPT}
+    echo -e "racon -t ${P} ${READS} ${PAF} ${ASM} > ${OUT}\n" >> ${SCRIPT}
+    i=${j}
+  done
+
+  sbatch --time=${TIME} --nodes 1 --ntasks ${P} -J raconpol-${B} -o slurm-${B}-raconpol-%A.out --export=ALL --mem=${MEM} ${SCRIPT}
+  echo
+done < ${FOFN}
+
+wait
+
+
+exit
+
+
+

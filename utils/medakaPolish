@@ -1,0 +1,37 @@
+#!/bin/bash
+
+if [ $# -eq 0 ]; then echo "Usage: $( basename ${0} ) asm.fofn" ; exit ; fi
+
+export FOFN=${1}
+
+if [ -z ${FOFN} ]; then export FOFN=asm.fofn ; fi
+
+source ~/.bash_profile
+source ~/software/conda/source-conda-for-scripts.sh
+#conda activate medaka
+conda activate medakaOct2022
+export MODEL=r941_min_sup_g507
+export P=16
+export MEM=80G
+export TIME=12:00:00
+
+export READS=export READS=~/jurban/data/coral/R01-L01/combined_fastqs/all.fastq
+
+
+
+OUTDIR=medakapol_output
+mkdir -p ${OUTDIR} && cd ${OUTDIR}
+
+while read line ; do
+  ARR=( $( echo $line ) )
+  DIR=${ARR[0]}
+  ASM=${ARR[1]}
+  SCRIPT=run-medaka-on-${DIR}.sh
+  echo ${DIR}
+  echo "#!/bin/bash" > ${SCRIPT}
+  echo "source ~/.bash_profile" >> ${SCRIPT}
+  #echo "conda activate medaka" >> ${SCRIPT}
+  echo "conda activate medakaOct2022" >> ${SCRIPT}
+  echo "medaka_consensus -i ${READS} -d ${ASM} -o ${DIR} -t ${P} -m ${MODEL}" >> ${SCRIPT}
+  sbatch --time=${TIME} --nodes 1 --ntasks ${P} -J medakapol-${DIR} -o slurm-${DIR}-medaka-%A.out --export=ALL --mem=${MEM} ${SCRIPT}
+done < ${FOFN}

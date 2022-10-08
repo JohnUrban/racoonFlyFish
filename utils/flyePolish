@@ -1,0 +1,38 @@
+#!/bin/bash
+
+if [ $# -eq 0 ]; then echo "Usage: $( basename ${0} ) asm.fofn" ; exit ; fi
+
+export FOFN=${1}
+
+if [ -z ${FOFN} ]; then export FOFN=asm.fofn ; fi
+
+
+source ~/.bash_profile
+source ~/software/conda/source-conda-for-scripts.sh
+export PATH=/central/groups/carnegie_poc/jurban/software/flye/Flye/bin:${PATH}
+export P=16
+export MEM=80G
+export TIME=8:00:00
+
+export READS=~/jurban/data/coral/R01-L01/combined_fastqs/all.fastq
+######export READS=~/jurban/data/coral/R01-L01/combined_fastqs/pass.fastq
+export ITERS=4
+export FLYE=/central/groups/carnegie_poc/jurban/software/flye/Flye/bin/flye
+export READTYPE=--nano-hq	#--nano-raw
+#export GSIZE=400m
+export GSIZE=800m
+
+
+OUTDIR=flyepol_output
+mkdir -p ${OUTDIR} && cd ${OUTDIR}
+
+while read line ; do
+  ARR=( $( echo $line ) )
+  DIR=${ARR[0]}
+  ASM=${ARR[1]}
+  SCRIPT=${DIR}.sh
+  echo ${DIR}
+  echo "#!/bin/bash" > ${SCRIPT}
+  echo "${FLYE} --genome-size ${GSIZE} ${READTYPE} ${READS} --out-dir ${DIR} --threads ${P} --polish-target ${ASM} --iterations ${ITERS}" >> ${SCRIPT}
+  sbatch --time=${TIME} --nodes 1 --ntasks ${P} -J flyepol-${DIR} -o slurm-${DIR}-flyepol-%A.out --export=ALL --mem=${MEM} ${SCRIPT}
+done < ${FOFN}

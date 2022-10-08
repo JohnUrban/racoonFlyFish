@@ -1,0 +1,114 @@
+#!/bin/bash
+
+if [ $# -eq 0 ]; then echo "Usage: $( basename ${0} ) asm.fofn" ; exit ; fi
+
+export FOFN=${1}
+
+if [ -z ${FOFN} ]; then export FOFN=asm.fofn ; fi
+
+
+source ~/.bash_profile
+source ~/software/conda/source-conda-for-scripts.sh
+conda activate miniasm
+
+export READS=~/jurban/data/coral/R01-L01/combined_fastqs/all.fastq
+#export READS=~/jurban/data/coral/R01-L01/combined_fastqs/pass.fastq
+
+
+export PATH=/central/groups/carnegie_poc/jurban/software/flye/Flye/bin:${PATH}
+
+export FLYE=/central/groups/carnegie_poc/jurban/software/flye/Flye/bin/flye
+export READTYPE=--nano-hq	#--nano-raw
+#export GSIZE=400m
+export GSIZE=800m
+
+export RACONITERS=1
+export FLYEITERS=1
+export MEDAKAITERS=1
+
+export MODEL=r941_min_sup_g507
+
+
+export P=16
+export TIME=24:00:00
+export MEM=80G
+
+
+
+
+OUTDIR=triopol_output
+mkdir -p ${OUTDIR} && cd ${OUTDIR}
+export MAIN=${PWD}
+
+while read line ; do
+  ARR=( $( echo $line ) )
+  B=${ARR[0]}			#raconpol
+  DIR=${B}			#flyepol/medaka
+  ASM=${ARR[1]} 		#racon/flye/medaka
+  SCRIPT=trio-polishing-on-${DIR}.sh
+  
+  ## make dir	for starting ASM to do all operations under
+  WD=${MAIN}/${DIR}
+  mkdir ${WD} && cd ${WD} 
+
+  echo ${DIR}
+
+  ## INIT SCRIPT
+  echo "#!/bin/bash" > ${SCRIPT}
+  echo "source ~/.bash_profile" >> ${SCRIPT}
+  echo -e "source ~/software/conda/source-conda-for-scripts.sh \n" >> ${SCRIPT}
+
+  ## RACON
+  RACONDIR=01-raconpol
+  RACONWD=${WD}/${RACONDIR}	# For racpol-asm path later
+  #####echo -e "mkdir ${RACONDIR} && cd ${RACONDIR}" >> ${SCRIPT}
+  echo -e "conda activate miniasm\n" >> ${SCRIPT}
+  echo -e "mkdir ${RACONDIR}\n" >> ${SCRIPT}
+  i=0
+  echo -e "extractFastxEntries.py --minlen 1 -f ${ASM} > ${RACONDIR}/racon-${B}_${i}.fasta\n" >> ${SCRIPT}
+  for j in $( seq 1 ${RACONITERS} ) ; do 
+    ASM=${RACONDIR}/racon-${B}_${i}.fasta
+    PAF=${RACONDIR}/${B}_${j}.paf
+    OUT=${RACONDIR}/racon-${B}_${j}.fasta
+    echo -e "minimap2 -t ${P} -x map-ont ${ASM} ${READS} > ${PAF}\n"  >> ${SCRIPT}
+    echo -e "racon -t ${P} ${READS} ${PAF} ${ASM} > ${OUT}\n" >> ${SCRIPT}
+    i=${j}
+  done
+
+  # Last Racon Asm
+  ASM=${RACONWD}/racon-${B}_${i}.fasta
+  
+  ## NO MORE # Move back out of RACONDIR to WD
+  ############ echo -e "cd ../\n" >> ${SCRIPT}
+  
+  ## FLYE
+  FLYEDIR=02-flyepol
+  FLYEWD=${WD}/${FLYEDIR}
+  echo -e "${FLYE} --genome-size ${GSIZE} ${READTYPE} ${READS} --out-dir ${FLYEDIR} --threads ${P} --polish-target ${ASM} --iterations ${FLYEITERS} \n" >> ${SCRIPT}
+  ASM=${FLYEWD}/polished_${FLYEITERS}.fasta
+  echo -e "ln -s ${ASM} 02-raconpol-flyepol.fasta \n" >> ${SCRIPT}
+
+  ## MEDAKA
+  MEDAKADIR=03-medaka
+  MEDAKAWD=${WD}/${MEDAKADIR}
+  echo -e "conda activate medakaOct2022 \n" >> ${SCRIPT}
+  for i in $(seq 1 ${MEDAKAITERS} ); do
+    MITERDIR=${MEDAKADIR}/${i}
+    echo -e "mkdir -p ${MITERDIR} \n" >> ${SCRIPT}
+    echo -e "medaka_consensus -i ${READS} -d ${ASM} -o ${MITERDIR} -t ${P} -m ${MODEL}\n" >> ${SCRIPT}
+    ASM=${MITERDIR}/consensus.fasta
+  done
+  echo -e "ln -s ${ASM} 03-raconpol-flyepol-medaka.fasta \n" >> ${SCRIPT}
+
+  sbatch --time=${TIME} --nodes 1 --ntasks ${P} -J triopolish-${B} -o slurm-${B}-triopolish-%A.out --export=ALL --mem=${MEM} ${SCRIPT}
+  echo
+
+  ## Come back out of init asm DIR
+  cd ../
+done < ${FOFN}
+
+wait
+
+
+
+
