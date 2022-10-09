@@ -1,0 +1,17 @@
+# Version 1.0.0
+- 4 pipelines can be controlled by the main racoonFlyFish program.
+        - Any number of RaCon polishing rounds (default = 4).
+        - Any number of Flye polishing rounds (default = 4).
+        - Any number of Medaka polishing rounds (default = 1).
+        - The chimera pipeline for "duo" and "trio" polishing.
+                - "duo" runs RaCon polishing followed by Flye polishing.
+                - "trio" additionally runs Medaka polishing (only recommended for nanopore data).
+                - At the moment, the pipeline runs the entire "trio" (TODO: allow stopping after "duo").
+                - By default, only one round of each polisher is run.
+                - At the moment, the ordering is always: all RaCon rounds, all Flye rounds, all Medaka rounds.
+
+# Version 0.0.0/0.0.1
+- Various slurm pipeline code for various polishing tools collected from various working directories.
+- Some organization of the code and directories started.
+- The main program wrapper, racoonFlyFish, introduced.
+- README and LICENSE introduced, etc.
