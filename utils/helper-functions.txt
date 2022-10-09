@@ -417,7 +417,7 @@ function write_chimera_script {
   RACONDIR=01-raconpol
   RACONWD=${WD}/${RACONDIR}	# For racpol-asm path later
   #####echo -e "mkdir ${RACONDIR} && cd ${RACONDIR}" >> ${SCRIPT}
-  echo -e "conda activate miniasm\n" >> ${SCRIPT}
+  ####echo -e "conda activate miniasm\n" >> ${SCRIPT}
   echo -e "mkdir ${RACONDIR}\n" >> ${SCRIPT}
   i=0
   echo -e "extractFastxEntries.py --minlen 1 -f ${ASM} > ${RACONDIR}/racon-${B}_${i}.fasta\n" >> ${SCRIPT}
@@ -446,7 +446,7 @@ function write_chimera_script {
   ## MEDAKA
   MEDAKADIR=03-medaka
   MEDAKAWD=${WD}/${MEDAKADIR}
-  echo -e "conda activate medakaOct2022 \n" >> ${SCRIPT}
+  ##echo -e "conda activate medakaOct2022 \n" >> ${SCRIPT}
   for i in $(seq 1 ${MEDAKAITERS} ); do
     MITERDIR=${MEDAKADIR}/${i}
     echo -e "mkdir -p ${MITERDIR} \n" >> ${SCRIPT}
@@ -474,10 +474,12 @@ function chimera_polish_loop {
     mkdir ${WD} && cd ${WD} 
   
     echo ${DIR}
-    write_chimera_script 
-
     export JOBNAME=chimerapolish-${B}
     export OUTNAME=slurm-${B}-triopolish-%A.out
+
+    write_chimera_script 
+    run_or_launch_script
+
     echo
 
     ## Come back out of init asm DIR
