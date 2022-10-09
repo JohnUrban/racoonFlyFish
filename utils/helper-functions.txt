@@ -206,7 +206,7 @@ function get_medaka_options {
 			- r941_min_high_g351
 			- r941_min_high_g360
 			- r941_min_sup_g507
-	-H	MOREHELP: Show version and help message from RaCon program. Can also do: racon --version and racon --help.
+	-H	MOREHELP: Show version and help message from medaka_consensus. Can also do: medaka --version and medaka_consensus -h.
 "
 }
 
