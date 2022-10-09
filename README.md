@@ -4,7 +4,7 @@
 racoonFlyFish: Automated multi-round genome assembly polishing with long reads using combinations of RaCon, Flye, and Medaka.
 
 
-# Version = 0.0.1
+# Version 1.0.0
 - 4 pipelines can be controlled by the main racoonFlyFish program.
 	- Any number of RaCon polishing rounds (default = 4).
 	- Any number of Flye polishing rounds (default = 4).

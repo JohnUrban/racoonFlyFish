@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 
+## This script was originally from https://github.com/JohnUrban/sciaratools2 and from https://github.com/JohnUrban/sciara-project-tools before that.
+## It was copied from SciaraTools2 on 2022-10-08 into the Utils directory of racoonFlyFish as a helper script.
+## This version is not under any active development!
+## See SciaraTools2 for most up-to-date version.
+
 import sys, string
 import argparse
 from numpy.random import binomial as binomial
