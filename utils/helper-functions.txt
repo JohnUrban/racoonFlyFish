@@ -330,8 +330,8 @@ function flye_polish_loop {
 
 function write_racon_script {
   echo "#!/bin/bash" > ${SCRIPT}
-  echo "#source ~/.bash_profile" >> ${SCRIPT}
-  echo -e "#conda activate miniasm\n" >> ${SCRIPT}
+  ##echo "#source ~/.bash_profile" >> ${SCRIPT}
+  ##echo -e "#conda activate miniasm\n" >> ${SCRIPT}
   i=0
   echo -e "${UTILS}/extractFastxEntries.py --minlen 1 -f ${ASM} > racon-${B}_${i}.fasta\n" >> ${SCRIPT}
   for j in 1 2 3 4 ; do 
@@ -373,8 +373,8 @@ function racon_polish_loop {
 function write_medaka_script {
   echo "#!/bin/bash" > ${SCRIPT}
   echo "source ~/.bash_profile" >> ${SCRIPT}
-  #echo "conda activate medaka" >> ${SCRIPT}
-  echo "conda activate medakaOct2022" >> ${SCRIPT}
+  ##echo "conda activate medaka" >> ${SCRIPT}
+  ##echo "conda activate medakaOct2022" >> ${SCRIPT}
   echo "medaka_consensus -i ${READS} -d ${ASM} -o ${DIR} -t ${P} -m ${MODEL}" >> ${SCRIPT}
 }
 
