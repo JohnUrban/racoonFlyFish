@@ -96,8 +96,7 @@ if [ -z ${MEDAKA} ]; then echo "medaka_consensus not found in PATH. Please add i
 if [ -z ${MM2} ]; then echo "minimap2 not found in PATH. Please add it to PATH. Exiting..." ; echo ; fishhelp ; exit ; fi
 if $MEDAKAHELP ; then medaka --version ; medaka_consensus --h ; fi
 
-for REQUIRED in FOFN READS MODEL  ; do echo -e "REQUIRED\t${REQUIRED}\t${!REQUIRED}" ; if [ -z ${!REQUIRED} ]; then echo ${REQUIRED} is a required argument. Not given. Exiting. ; echo ; fishhelp 
-; fi ; done
+for REQUIRED in FOFN READS MODEL  ; do echo -e "REQUIRED\t${REQUIRED}\t${!REQUIRED}" ; if [ -z ${!REQUIRED} ]; then echo ${REQUIRED} is a required argument. Not given. Exiting. ; echo ; fishhelp ; fi ; done
 for ARG in ROUNDS THREADS SLURM TIME MEM ; do echo -e "OPTIONS\t${ARG}\t${!ARG}" ; done
 
 
