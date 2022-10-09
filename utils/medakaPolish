@@ -70,12 +70,12 @@ export MEDAKAHELP=false
 ##############################################################################
 ## GET OPTS
 ##############################################################################
-while getopts "i:R:t:r:ST:M:G:d:Hv" arg; do
+while getopts "i:R:t:r:ST:M:m:Hv" arg; do
     case $arg in
         i) export FOFN=${OPTARG} ; FOFNMODE=true ;;
         R) export READS=${OPTARG} ;;
-        r) export ROUNDS=${OPTARG} ; export ITERS=${OPTARG} ; export MEDAKAROUNDS=${OPTARG} ;;
         t) export THREADS=${OPTARG} ; export P=${THREADS} ;;
+        r) export ROUNDS=${OPTARG} ; export ITERS=${OPTARG} ; export MEDAKAROUNDS=${OPTARG} ;;
         S) export SLURM=true ;;
         T) export TIME=${OPTARG} ;;
         M) export MEM=${OPTARG} ;;
@@ -92,11 +92,12 @@ done
 ##############################################################################
 ## PROCESSING ARGS
 ##############################################################################
-if [ -z ${MEDAKA} ]; then echo "medaka_consensus not found in PATH. Please add it to PATH. Exiting..." ; echo ; medakahelp ; exit ; fi
-if [ -z ${MM2} ]; then echo "minimap2 not found in PATH. Please add it to PATH. Exiting..." ; echo ; medakahelp ; exit ; fi
-if $MEDAKAHELP ; then medaka_consensus --version ; medaka_consensus --help ; fi
+if [ -z ${MEDAKA} ]; then echo "medaka_consensus not found in PATH. Please add it to PATH. Exiting..." ; echo ; fishhelp ; exit ; fi
+if [ -z ${MM2} ]; then echo "minimap2 not found in PATH. Please add it to PATH. Exiting..." ; echo ; fishhelp ; exit ; fi
+if $MEDAKAHELP ; then medaka --version ; medaka_consensus --h ; fi
 
-for REQUIRED in FOFN READS MODEL  ; do echo -e "REQUIRED\t${REQUIRED}\t${!REQUIRED}" ; if [ -z ${!REQUIRED} ]; then echo ${REQUIRED} is a required argument. Not given. Exiting. ; echo ; flyhelp ; fi ; done
+for REQUIRED in FOFN READS MODEL  ; do echo -e "REQUIRED\t${REQUIRED}\t${!REQUIRED}" ; if [ -z ${!REQUIRED} ]; then echo ${REQUIRED} is a required argument. Not given. Exiting. ; echo ; fishhelp 
+; fi ; done
 for ARG in ROUNDS THREADS SLURM TIME MEM ; do echo -e "OPTIONS\t${ARG}\t${!ARG}" ; done
 
 

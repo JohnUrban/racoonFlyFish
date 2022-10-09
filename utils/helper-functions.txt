@@ -183,16 +183,45 @@ function get_flye_options {
 function get_racon_options {
   echo "
 	RaCon Pipeline Options:
-	-x	X : -x option for minimap2. Mapping presets. Examples: map-ont, map-pb .
-	-H	RACONHELP: Show version and help message from RaCon program. Can also do: racon --version and racon --help.
+	-x	X 	: -x option for minimap2. Mapping presets. Examples: map-ont, map-pb .
+	-H	MOREHELP: Show version and help message from RaCon program. Can also do: racon --version and racon --help.
 "
 }
 
 function get_medaka_options {
   echo "
 	Medaka Pipeline Options:
+	-m	MODEL 	: -m option for medaka_consensus. Specify nanopore model. Use -H for more info. Example MinION models:  
+			- r103_min_high_g345
+			- r103_min_high_g360
+			- r10_min_high_g303
+			- r10_min_high_g340
+			- r941_min_fast_g303
+			- r941_min_fast_g507
+			- r941_min_hac_g507
+			- r941_min_high_g303
+			- r941_min_high_g330
+			- r941_min_high_g340_rle
+			- r941_min_high_g344
+			- r941_min_high_g351
+			- r941_min_high_g360
+			- r941_min_sup_g507
+	-H	MOREHELP: Show version and help message from RaCon program. Can also do: racon --version and racon --help.
 "
 }
+
+while getopts "i:R:t:r:ST:M:m:Hv" arg; do
+    case $arg in
+        i) export FOFN=${OPTARG} ; FOFNMODE=true ;;
+        R) export READS=${OPTARG} ;;
+        t) export THREADS=${OPTARG} ; export P=${THREADS} ;;
+        r) export ROUNDS=${OPTARG} ; export ITERS=${OPTARG} ; export MEDAKAROUNDS=${OPTARG} ;;
+        S) export SLURM=true ;;
+        T) export TIME=${OPTARG} ;;
+        M) export MEM=${OPTARG} ;;  
+        m) export MODEL=${OPTARG} ;;
+        H) export MEDAKAHELP=true ;;
+        v) export VERBOSE=true ;;
 
 function get_chimera_options {
   echo "
