@@ -20,7 +20,7 @@ version_check ${@}
 
 
 ## HELP
-if [ $# -eq 0 ]; then echo "Usage: $( basename ${0} ) asm.fofn" ; flyhelp ; exit ; fi
+if [ $# -eq 0 ]; then flyhelp ; exit ; fi
 
 
 
