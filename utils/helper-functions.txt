@@ -123,7 +123,7 @@ function help {
 			- Medaka 12-24 hours is warranted.
 			- The trio-chimera pipeline with 1 round each (RaCon->Flye->Medaka) will need 12 hours to be safe as well.
 		- Ranking pipelines by memory needed:
-			- RaCon uses the least memory. A limit of 24G is still a safe bet.
+			- RaCon uses the least memory. A limit of 48G is a safe bet.
 			- Flye and Medaka use much more memory. A limit of something in the range of 100-120G may be necessary.
 			- The duo- and trio-chimera pipelines with 1 round each (RaCon->Flye or RaCon->Flye->Medaka) will need 100-120G as well.
 
@@ -367,7 +367,7 @@ function run_or_launch_script {
 
 function write_flye_script {
   echo "#!/bin/bash" > ${SCRIPT}
-  echo "${FLYE} --genome-size ${GSIZE} ${READTYPE} ${READS} --out-dir ${DIR} --threads ${P} --polish-target ${ASM} --iterations ${ITERS}" >> ${SCRIPT}
+  echo "${FLYE} --genome-size ${GSIZE} --${READTYPE} ${READS} --out-dir ${DIR} --threads ${P} --polish-target ${ASM} --iterations ${ITERS}" >> ${SCRIPT}
 }
 
 function flye_polish_loop {
