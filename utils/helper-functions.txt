@@ -210,18 +210,6 @@ function get_medaka_options {
 "
 }
 
-while getopts "i:R:t:r:ST:M:m:Hv" arg; do
-    case $arg in
-        i) export FOFN=${OPTARG} ; FOFNMODE=true ;;
-        R) export READS=${OPTARG} ;;
-        t) export THREADS=${OPTARG} ; export P=${THREADS} ;;
-        r) export ROUNDS=${OPTARG} ; export ITERS=${OPTARG} ; export MEDAKAROUNDS=${OPTARG} ;;
-        S) export SLURM=true ;;
-        T) export TIME=${OPTARG} ;;
-        M) export MEM=${OPTARG} ;;  
-        m) export MODEL=${OPTARG} ;;
-        H) export MEDAKAHELP=true ;;
-        v) export VERBOSE=true ;;
 
 function get_chimera_options {
   echo "
