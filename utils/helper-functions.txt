@@ -114,6 +114,7 @@ function get_common_options {
         -R      READS   : Required.
         -t      THREADS : Default = 16.
         -r      ROUNDS  : Defaults = When run separately, 4 for RaCon, 4 for Flye, 1 for Medaka. In chimera-mode, defaults to 1 round of each polisher.
+			: Caveat : this only affects RaCon rounds in Chimera mode.
         -S      SLURM   : Use to launch SLURM batch scripts (one per assembly in FOFN) instead of processing serially in current env. Default = false.
         -T      TIME    : Time limit for SLURM. Default = 12:00:00 .
         -M      MEM     : Mem limit for SLURM. Default = 80G .
@@ -213,7 +214,37 @@ function get_medaka_options {
 
 function get_chimera_options {
   echo "
-	Chimera Pipeline Options
+	Chimera Pipeline Options:
+
+	Number of polishing rounds for each polisher:
+        -r      ROUNDS  : Number of polishing rounds for RaCon. Default = 1. 
+        -f      ROUNDS  : Number of polishing rounds for Flye. Default = 1. 
+        -k      ROUNDS  : Number of polishing rounds for Medaka. Default = 1. 
+
+	Racon-specific options:
+	-x	X 	: -x option for minimap2. Mapping presets. Examples: map-ont, map-pb .
+
+	Flye-specific options:
+	-G	GSIZE	: Size of haploid genome (can use diploid size if assemblies closer to that). Shorthand works. E.g. 400m for 400 Mb genome.
+	-d	READTYPE: Read type used by Flye. Use -H to bring up flye help message. 
+			  Options here are: nano-raw, nano-corr, nano-hq, pacbio-raw, pacbio-corr, pacbio-hifi.
+
+	Medaka-specific options:
+	-m	MODEL 	: -m option for medaka_consensus. Specify nanopore model. Use -H for more info. Example MinION models:  
+			- r103_min_high_g345
+			- r103_min_high_g360
+			- r10_min_high_g303
+			- r10_min_high_g340
+			- r941_min_fast_g303
+			- r941_min_fast_g507
+			- r941_min_hac_g507
+			- r941_min_high_g303
+			- r941_min_high_g330
+			- r941_min_high_g340_rle
+			- r941_min_high_g344
+			- r941_min_high_g351
+			- r941_min_high_g360
+			- r941_min_sup_g507
 "
 }
 
