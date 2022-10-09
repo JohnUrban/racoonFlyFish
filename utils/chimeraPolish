@@ -91,9 +91,9 @@ while getopts "i:R:t:r:f:k:ST:M:x:G:d:m:v" arg; do
         i) export FOFN=${OPTARG} ; FOFNMODE=true ;;
         R) export READS=${OPTARG} ;;
         t) export THREADS=${OPTARG} ; export P=${THREADS} ;;
-        r) export RACONITERS=${OPTARG} ;
-        f) export FLYEITERS=${OPTARG} ;
-        k) export MEDAKAITERS=${OPTARG} ;
+        r) export RACONITERS=${OPTARG} ;;
+        f) export FLYEITERS=${OPTARG} ;;
+        k) export MEDAKAITERS=${OPTARG} ;;
         S) export SLURM=true ;;
         T) export TIME=${OPTARG} ;;
         M) export MEM=${OPTARG} ;;
