@@ -367,7 +367,7 @@ function run_or_launch_script {
 
 function write_flye_script {
   echo "#!/bin/bash" > ${SCRIPT}
-  echo "${FLYE} --genome-size ${GSIZE} --${READTYPE} ${READS} --out-dir ${DIR} --threads ${P} --polish-target ${ASM} --iterations ${ITERS}" >> ${SCRIPT}
+  echo "${FLYE} --genome-size ${GSIZE} ${READTYPE} ${READS} --out-dir ${DIR} --threads ${P} --polish-target ${ASM} --iterations ${ITERS}" >> ${SCRIPT}
 }
 
 function flye_polish_loop {

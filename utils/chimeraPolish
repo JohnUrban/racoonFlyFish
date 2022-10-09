@@ -99,7 +99,7 @@ while getopts "i:R:t:r:f:k:ST:M:x:G:d:m:v" arg; do
         M) export MEM=${OPTARG} ;;
         x) export X=${OPTARG} ;;
         G) export GSIZE=${OPTARG} ;;
-        d) export READTYPE=${OPTARG} ;;
+        d) export READTYPE=--${OPTARG} ;;
         m) export MODEL=${OPTARG} ;;
         v) export VERBOSE=true ;;
         *) help; exit;;
