@@ -39,19 +39,73 @@ function help {
 	-v	VERBOSE	: Default = false.
 
 
-        RaCon Options:
+	RaCon Pipeline Options:
+	-x	X 	: -x option for minimap2. Mapping presets. Examples: map-ont, map-pb .
+	-H	MOREHELP: Show version and help message from RaCon program. Can also do: racon --version and racon --help.
 
 
-        Flye Options:
+        Flye Pipeline Options:
+	-G	GSIZE	: Size of haploid genome (can use diploid size if assemblies closer to that). Shorthand works. E.g. 400m for 400 Mb genome.
+	-d	READTYPE: Read type used by Flye. Use -H to bring up flye help message. 
+			  Options here are: nano-raw, nano-corr, nano-hq, pacbio-raw, pacbio-corr, pacbio-hifi.
+	-H	FLYEHELP: Show version and help message from Flye program. Can also do: flye --version and flye --help.
 
 
-        Medaka Options:
+	Medaka Pipeline Options:
+	-m	MODEL 	: -m option for medaka_consensus. Specify nanopore model. Use -H for more info. Example MinION models:  
+			- r103_min_high_g345
+			- r103_min_high_g360
+			- r10_min_high_g303
+			- r10_min_high_g340
+			- r941_min_fast_g303
+			- r941_min_fast_g507
+			- r941_min_hac_g507
+			- r941_min_high_g303
+			- r941_min_high_g330
+			- r941_min_high_g340_rle
+			- r941_min_high_g344
+			- r941_min_high_g351
+			- r941_min_high_g360
+			- r941_min_sup_g507
+	-H	MOREHELP: Show version and help message from medaka_consensus. Can also do: medaka --version and medaka_consensus -h.
 
 
-        Chimera Options:
+
+	Chimera Pipeline Options:
+
+	Number of polishing rounds for each polisher:
+        -r      ROUNDS  : Number of polishing rounds for RaCon. Default = 1. 
+        -f      ROUNDS  : Number of polishing rounds for Flye. Default = 1. 
+        -k      ROUNDS  : Number of polishing rounds for Medaka. Default = 1. 
+
+		Racon-specific options:
+		-x	X 	: -x option for minimap2. Mapping presets. Examples: map-ont, map-pb .
+
+		Flye-specific options:
+		-G	GSIZE	: Size of haploid genome (can use diploid size if assemblies closer to that). Shorthand works. E.g. 400m for 400 Mb genome.
+		-d	READTYPE: Read type used by Flye. Use -H to bring up flye help message. 
+			  Options here are: nano-raw, nano-corr, nano-hq, pacbio-raw, pacbio-corr, pacbio-hifi.
+
+		Medaka-specific options:
+		-m	MODEL 	: -m option for medaka_consensus. Specify nanopore model. Use -H for more info. Example MinION models:  
+				- r103_min_high_g345
+				- r103_min_high_g360
+				- r10_min_high_g303
+				- r10_min_high_g340
+				- r941_min_fast_g303
+				- r941_min_fast_g507
+				- r941_min_hac_g507
+				- r941_min_high_g303
+				- r941_min_high_g330
+				- r941_min_high_g340_rle
+				- r941_min_high_g344
+				- r941_min_high_g351
+				- r941_min_high_g360
+				- r941_min_sup_g507
 
 
-	SLURM Advice (assuming 400-800Mb genome with 10-30X read coverage, 16 threads):
+
+	SLURM Advice (assuming 400-800Mb genome with 5-10X read coverage, 16 threads):
 		- Ranking the pipelines by speed:
 			- RaCon (a couple of hours for 4 iterations). An 8 hour limit is very safe.
 			- Flye (a little bit longer than RaCon). An 8 hour limit is very safe.
@@ -61,6 +115,17 @@ function help {
 			- RaCon uses the least memory. A limit of 24G is a safe bet.
 			- Flye and Medaka use much more memory. A limit of something in the range of 50-80G may be necessary.
 			- The duo- and trio-chimera pipelines with 1 round each (RaCon->Flye or RaCon->Flye->Medaka) will need 50-80G as well.
+
+	SLURM Advice (assuming 400-800Mb genome with 15-30X read coverage, 16 threads):
+		- Ranking the pipelines by speed:
+			- RaCon (a couple of hours for 4 iterations). An 8 hour limit is very safe.
+			- Flye (longer and more resources than RaCon). An 12-24 hour limit may be warranted.
+			- Medaka 12-24 hours is warranted.
+			- The trio-chimera pipeline with 1 round each (RaCon->Flye->Medaka) will need 12 hours to be safe as well.
+		- Ranking pipelines by memory needed:
+			- RaCon uses the least memory. A limit of 24G is still a safe bet.
+			- Flye and Medaka use much more memory. A limit of something in the range of 100-120G may be necessary.
+			- The duo- and trio-chimera pipelines with 1 round each (RaCon->Flye or RaCon->Flye->Medaka) will need 100-120G as well.
 
 "
 }
