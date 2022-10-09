@@ -372,7 +372,7 @@ function racon_polish_loop {
 
 function write_medaka_script {
   echo "#!/bin/bash" > ${SCRIPT}
-  echo "source ~/.bash_profile" >> ${SCRIPT}
+  ##echo "source ~/.bash_profile" >> ${SCRIPT}
   ##echo "conda activate medaka" >> ${SCRIPT}
   ##echo "conda activate medakaOct2022" >> ${SCRIPT}
   echo "medaka_consensus -i ${READS} -d ${ASM} -o ${DIR} -t ${P} -m ${MODEL}" >> ${SCRIPT}
