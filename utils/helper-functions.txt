@@ -475,8 +475,8 @@ function medaka_polish_loop {
 function write_chimera_script {
   ## INIT SCRIPT
   echo "#!/bin/bash" > ${SCRIPT}
-  echo "source ~/.bash_profile" >> ${SCRIPT}
-  echo -e "source ~/software/conda/source-conda-for-scripts.sh \n" >> ${SCRIPT}
+  ##echo "source ~/.bash_profile" >> ${SCRIPT}
+  ##echo -e "source ~/software/conda/source-conda-for-scripts.sh \n" >> ${SCRIPT}
 
   ## RACON
   RACONDIR=01-raconpol
