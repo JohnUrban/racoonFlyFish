@@ -118,8 +118,8 @@ function help {
 
 	SLURM Advice (assuming 400-800Mb genome with 15-30X read coverage, 16 threads):
 		- Ranking the pipelines by speed:
-			- RaCon (a couple of hours for 4 iterations). An 8 hour limit is very safe.
-			- Flye (longer and more resources than RaCon). An 12-24 hour limit may be warranted.
+			- RaCon - A 12-16 hour limit is safe.
+			- Flye (longer and more resources than RaCon). A 12-24 hour limit may be warranted.
 			- Medaka 12-24 hours is warranted.
 			- The trio-chimera pipeline with 1 round each (RaCon->Flye->Medaka) will need 12 hours to be safe as well.
 		- Ranking pipelines by memory needed:
